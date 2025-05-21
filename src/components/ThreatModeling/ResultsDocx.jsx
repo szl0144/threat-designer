@@ -338,6 +338,7 @@ const createThreatModelingDocument = async (
             "impact",
             "likelihood",
             "mitigations",
+            "owasp_category",
           ],
           threatCatalogData
         )

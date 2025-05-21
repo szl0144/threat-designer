@@ -78,3 +78,26 @@ export const CategoryIcon = () => (
     </g>
   </svg>
 );
+
+export const OWASPIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+    <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+    <g id="SVGRepo_iconCarrier">
+      <path
+        d="M12 2L3 7V11.2C3 16.4 6.6 21.1 12 23C17.4 21.1 21 16.4 21 11.2V7L12 2Z"
+        stroke="#1C274C"
+        stroke-width="1.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+      <path
+        d="M12 9V13M12 17H12.01"
+        stroke="#1C274C"
+        stroke-width="1.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+    </g>
+  </svg>
+);

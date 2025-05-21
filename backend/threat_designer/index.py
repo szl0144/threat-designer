@@ -60,10 +60,12 @@ def _handle_replay_state(state: AgentState, job_id: str) -> AgentState:
             "retry": 1,
             "image_data": parse_s3_image_to_base64(S3_BUCKET, item["s3_location"]),
             "description": item["description"],
+            "isGenAI": item["isGenAI"],
             "assumptions": item["assumptions"],
             "title": item["title"],
             "owner": item["owner"],
             "s3_location": item["s3_location"],
+            "iac_content": item["iac_content"],
         }
     )
     return state
@@ -88,6 +90,8 @@ def _handle_new_state(state: AgentState, event: Dict[str, Any]) -> AgentState:
             "s3_location": event["s3_location"],
             "owner": event.get("owner", None),
             "title": event.get("title", None),
+            "iac_content": event.get("iac_content", " "),
+            "isGenAI": event.get("isGenAI", False),
         }
     )
     return state

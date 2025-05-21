@@ -1,6 +1,7 @@
 import React from "react";
 import Wizard from "@cloudscape-design/components/wizard";
 import StartComponent from "./StartComponent";
+import IaCFileUpload from "./IaCFileUpload";
 import {
   Header,
   Form,
@@ -11,6 +12,7 @@ import {
   Select,
   Grid,
   TokenGroup,
+  Toggle,
 } from "@cloudscape-design/components";
 import { I18nProvider } from "@cloudscape-design/components/i18n";
 import Slider from "@cloudscape-design/components/slider";
@@ -43,6 +45,10 @@ export const SubmissionComponent = ({
   const [assumptions, setAssumptions] = React.useState([]);
   const [text, setText] = React.useState("");
   const [error, setError] = React.useState(false);
+  const [iacFile, setIacFile] = React.useState(null);
+  const [iacFileValue, setIacFileValue] = React.useState([]);
+  const [isGenAI, setIsGenAI] = React.useState(false);
+
   const handleAddAssumption = () => {
     if (newAssumption.trim()) {
       setAssumptions((prev) => [...prev, newAssumption.trim()]);
@@ -52,6 +58,11 @@ export const SubmissionComponent = ({
 
   const handleRemoveAssumption = (index) => {
     setAssumptions((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleIacFileChange = (fileData) => {
+    console.log('File Data Received:', fileData);
+    setIacFile(fileData);
   };
 
   return (
@@ -85,7 +96,7 @@ export const SubmissionComponent = ({
       submitButtonText="Start threat modeling"
       isLoadingNextStep={loading}
       onSubmit={() => {
-        handleStart(title, text, assumptions);
+        handleStart(title, text, assumptions, iacFile?.content, isGenAI);
       }}
       steps={[
         {
@@ -116,18 +127,42 @@ export const SubmissionComponent = ({
           ),
         },
         {
+          title: "File Upload",
+          description: "Upload the IaC file for your application (Terraform, AWS CloudFormation, or OpenAPI template file)",
+          content: (
+            <div style={{ minHeight: 200 }}>
+              <IaCFileUpload
+                onFileChange={handleIacFileChange}
+                value={iacFileValue}
+                setValue={setIacFileValue}
+                error={error}
+                setError={setError}
+              />
+            </div>
+          ),
+          isOptional: true,
+        },
+        {
           title: "Description",
           description:
             "Provide a clear description of your application/system to help identify potential security concerns and establish the scope of the threat model.",
           content: (
             <div style={{ minHeight: 200 }}>
-              <FormField>
-                <Textarea
-                  onChange={({ detail }) => setText(detail.value)}
-                  value={text}
-                  placeholder="Add your description"
-                />
-              </FormField>
+              <SpaceBetween size="s">
+                <FormField>
+                  <Textarea
+                    onChange={({ detail }) => setText(detail.value)}
+                    value={text}
+                    placeholder="Add your description"
+                  />
+                </FormField>
+                <Toggle
+                  onChange={({ detail }) => setIsGenAI(detail.checked)}
+                  checked={isGenAI}
+                >
+                  GenAI App?
+                </Toggle>
+              </SpaceBetween>
             </div>
           ),
           isOptional: true,
@@ -265,13 +300,39 @@ export const SubmissionComponent = ({
                     />
                   </SpaceBetween>
                 )}
-                {text.length > 0 && (
+                {iacFile && (
                   <SpaceBetween size="xs">
                     <Header
                       variant="h3"
                       actions={<Button onClick={() => setActiveStepIndex(2)}>Edit</Button>}
                     >
-                      Step 3: Description
+                      Step 3: File Upload
+                    </Header>
+                    <FileTokenGroup
+                      i18nStrings={{
+                        removeFileAriaLabel: (e) => `Remove file ${e + 1}`,
+                        limitShowFewer: "Show fewer files",
+                        limitShowMore: "Show more files",
+                        errorIconAriaLabel: "Error",
+                      }}
+                      items={[
+                        {
+                          file: iacFileValue[0],
+                        },
+                      ]}
+                      readOnly
+                      showFileLastModified
+                      showFileSize
+                    />
+                  </SpaceBetween>
+                )}
+                {text.length > 0 && (
+                  <SpaceBetween size="xs">
+                    <Header
+                      variant="h3"
+                      actions={<Button onClick={() => setActiveStepIndex(3)}>Edit</Button>}
+                    >
+                      Step 4: Description
                     </Header>
                     <Textarea
                       onChange={({ detail }) => setText(detail.value)}
@@ -279,15 +340,22 @@ export const SubmissionComponent = ({
                       placeholder="Add your description"
                       readOnly
                     />
+                    <Toggle
+                      onChange={({ detail }) => setIsGenAI(detail.checked)}
+                      checked={isGenAI}
+                      disabled={true}
+                    >
+                      GenAI App?
+                    </Toggle>
                   </SpaceBetween>
                 )}
                 {iteration && (
                   <SpaceBetween size="xs">
                     <Header
                       variant="h3"
-                      actions={<Button onClick={() => setActiveStepIndex(3)}>Edit</Button>}
+                      actions={<Button onClick={() => setActiveStepIndex(4)}>Edit</Button>}
                     >
-                      Step 4: Iterations
+                      Step 5: Iterations
                     </Header>
                     <FormField>
                       <Select
@@ -329,9 +397,9 @@ export const SubmissionComponent = ({
                   <SpaceBetween size="xs">
                     <Header
                       variant="h3"
-                      actions={<Button onClick={() => setActiveStepIndex(4)}>Edit</Button>}
+                      actions={<Button onClick={() => setActiveStepIndex(5)}>Edit</Button>}
                     >
-                      Step 5: Assumptions
+                      Step 6: Assumptions
                     </Header>
                     <FormField>
                       <TokenGroup items={convertArrayToObjects(assumptions)} readOnly />

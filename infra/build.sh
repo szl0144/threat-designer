@@ -11,21 +11,27 @@ ROOT=$PWD
 authorizer_build_path=${build_path}/authorizer_code/
 td_build_path=${build_path}/threat_designer_code/
 backend_build_path=${build_path}/backend_code/
-langchain_layer_path=${build_path}/langchain_code/
+langchain_core_layer_path=${build_path}/langchain_core_code/
+langchain_aws_layer_path=${build_path}/langchain_aws_code/
+langgraph_layer_path=${build_path}/langgraph_code/
 auth_layer_path=${build_path}/authorization_deps_code/
 
 # Clean up existing build directories
 rm -rf $authorizer_build_path
 rm -rf $td_build_path
 rm -rf $backend_build_path
-rm -rf $langchain_layer_path
+rm -rf $langchain_core_layer_path
+rm -rf $langchain_aws_layer_path
+rm -rf $langgraph_layer_path
 rm -rf $auth_layer_path
 
 # Create new build directories
 mkdir -p $authorizer_build_path
 mkdir -p $td_build_path
 mkdir -p $backend_build_path
-mkdir -p $langchain_layer_path
+mkdir -p $langchain_core_layer_path
+mkdir -p $langchain_aws_layer_path
+mkdir -p $langgraph_layer_path
 mkdir -p $auth_layer_path
 
 echo "Building lambda layers"
@@ -37,10 +43,29 @@ if [[ -f ../backend/dependencies/requirements-authorizer.txt ]]; then
     pip3 install --platform manylinux2014_x86_64 --implementation cp --only-binary=:all: --python-version 3.12 -r ../backend/dependencies/requirements-authorizer.txt --target $auth_layer_path/python
 fi
 
-# Build langchain lambda layer
-if [[ -f ../backend/dependencies/requirements-langchain.txt ]]; then
-    echo "Installing langchain packages..."
-    pip3 install --platform manylinux2014_x86_64 --implementation cp --only-binary=:all: --python-version 3.12 -r ../backend/dependencies/requirements-langchain.txt --target $langchain_layer_path/python
+# Build langchain core lambda layer
+if [[ -f ../backend/dependencies/requirements-langchain-core.txt ]]; then
+    echo "Installing langchain core packages..."
+    pip3 install --platform manylinux2014_x86_64 --implementation cp --only-binary=:all: --python-version 3.12 --no-cache-dir -r ../backend/dependencies/requirements-langchain-core.txt --target $langchain_core_layer_path/python
+fi
+
+
+
+# Build langchain AWS lambda layer
+if [[ -f ../backend/dependencies/requirements-langchain-aws.txt ]]; then
+    echo "Installing langchain AWS packages..."
+    pip3 install --platform manylinux2014_x86_64 --implementation cp --only-binary=:all: --python-version 3.12 --no-cache-dir -r ../backend/dependencies/requirements-langchain-aws.txt --target $langchain_aws_layer_path/python
+fi
+
+find $langchain_aws_layer_path/python -name "*.dist-info" -type d -exec rm -rf {} +
+find $langchain_aws_layer_path/python -name "*.egg-info" -type d -exec rm -rf {} +
+find $langchain_aws_layer_path/python -name "__pycache__" -type d -exec rm -rf {} +
+find $langchain_aws_layer_path/python -name "*.pyc" -delete
+
+# Build langgraph lambda layer
+if [[ -f ../backend/dependencies/requirements-langgraph.txt ]]; then
+    echo "Installing langgraph packages..."
+    pip3 install --platform manylinux2014_x86_64 --implementation cp --only-binary=:all: --python-version 3.12 -r ../backend/dependencies/requirements-langgraph.txt --target $langgraph_layer_path/python
 fi
 
 cd $ROOT

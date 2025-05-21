@@ -5,7 +5,7 @@ resource "aws_api_gateway_rest_api" "threat_design_api" {
     lambda_arn     = local.api_lambda_invoke_url,
     authorizer_arn = local.authorizer_invoke_url,
     aws_region     = var.region,
-    ui_domain      = "https://${aws_amplify_branch.develop.branch_name}.${aws_amplify_app.threat-designer.default_domain}"
+    ui_domain      = "http://localhost:5173"
   })
 
   endpoint_configuration {

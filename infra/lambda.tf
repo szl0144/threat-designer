@@ -29,7 +29,12 @@ resource "aws_lambda_function" "threat_designer" {
   depends_on = [
     null_resource.build
   ]
-  layers = [ local.powertools_layer_arn, aws_lambda_layer_version.lambda_layer_langchain.arn]
+  layers = [ 
+    local.powertools_layer_arn, 
+    aws_lambda_layer_version.lambda_layer_langchain_core.arn,
+    aws_lambda_layer_version.lambda_layer_langchain_aws.arn,
+    aws_lambda_layer_version.lambda_layer_langgraph.arn
+  ]
 }
 
 resource "aws_iam_role" "threat_designer_role" {
@@ -80,8 +85,8 @@ resource "aws_lambda_function" "backend" {
     variables = {
       LOG_LEVEL              = "INFO",
       REGION                 = var.region,
-      PORTAL_REDIRECT_URL    = "https://${aws_amplify_branch.develop.branch_name}.${aws_amplify_app.threat-designer.default_domain}"
-      TRUSTED_ORIGINS        = "https://${aws_amplify_branch.develop.branch_name}.${aws_amplify_app.threat-designer.default_domain}, http://localhost:5173"
+      PORTAL_REDIRECT_URL    = "https://www.reinforce-com326.com"
+      TRUSTED_ORIGINS        = "https://${aws_amplify_branch.develop.branch_name}.${aws_amplify_app.threat-designer.default_domain}, http://localhost:5173, https://www.reinforce-com326.com"
       THREAT_MODELING_LAMBDA = aws_lambda_function.threat_designer.id,
       AGENT_STATE_TABLE      = aws_dynamodb_table.threat_designer_state.id,
       AGENT_TRAIL_TABLE      = aws_dynamodb_table.threat_designer_trail.id,
@@ -125,12 +130,12 @@ resource "aws_iam_role_policy" "lambda_threat_designer_api_policy" {
   })
 }
 
-resource "aws_lambda_provisioned_concurrency_config" "backend" {
-  # depends_on = ["null_resource.alias_provisioned_concurrency_transition_delay"]
-  function_name                     = aws_lambda_alias.backend.function_name
-  provisioned_concurrent_executions = var.provisioned_lambda_concurrency
-  qualifier                         = aws_lambda_alias.backend.name
-}
+# resource "aws_lambda_provisioned_concurrency_config" "backend" {
+#   # depends_on = ["null_resource.alias_provisioned_concurrency_transition_delay"]
+#   function_name                     = aws_lambda_alias.backend.function_name
+#   provisioned_concurrent_executions = var.provisioned_lambda_concurrency
+#   qualifier                         = aws_lambda_alias.backend.name
+# }
 
 
 resource "aws_lambda_alias" "backend" {
@@ -138,6 +143,4 @@ resource "aws_lambda_alias" "backend" {
   description      = "provisioned concurrency"
   function_name    = aws_lambda_function.backend.arn
   function_version = aws_lambda_function.backend.version
-
-  routing_config {}
 }

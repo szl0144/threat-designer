@@ -25,6 +25,7 @@ export default function ThreatModelingOutput({
   assets,
   updateTM,
   refreshTrail,
+  isGenAI,
 }) {
   const [openModal, setOpenModal] = useState(false);
   const { id = null } = useParams();
@@ -169,6 +170,7 @@ export default function ThreatModelingOutput({
               data={item}
               type={"threats"}
               updateData={updateTM}
+              isGenAI={isGenAI}
               headers={[
                 "name",
                 "description",
@@ -177,6 +179,7 @@ export default function ThreatModelingOutput({
                 "impact",
                 "target",
                 "mitigations",
+                "owasp_category",
               ]}
             />
           ))}
@@ -191,6 +194,7 @@ export default function ThreatModelingOutput({
           "impact",
           "target",
           "mitigations",
+          "owasp_category",
         ]}
         data={[]}
         visible={openModal}

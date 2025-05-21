@@ -12,6 +12,7 @@ locals {
   allowed_origins = [
     "http://localhost:3000",
     "https://${aws_amplify_branch.develop.branch_name}.${aws_amplify_app.threat-designer.default_domain}",
-    "http://localhost:5173"
+    "http://localhost:5173",
+    "https://www.reinforce-com326.com"
   ]
 }

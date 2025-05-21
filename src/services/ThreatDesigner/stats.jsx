@@ -34,7 +34,9 @@ async function startThreatModeling(
   reasoning = false,
   title = null,
   description = null,
+  isGenAI = false,
   assumptions = null,
+  iacContent = null,
   replay = false,
   id = null
 ) {
@@ -44,11 +46,14 @@ async function startThreatModeling(
     iteration,
     title,
     description,
+    isGenAI,
     assumptions,
+    iacContent,
     replay,
     id,
     reasoning,
   };
+  
   return instance.post(statsPath, postData);
 }
 

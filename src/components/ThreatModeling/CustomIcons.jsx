@@ -267,11 +267,18 @@ export const Stepper = ({ steps, currentStep = 0, onViewportChange }) => {
   const isMobile = width < 480;
   const isTablet = width >= 480 && width < 768;
 
+  const memoizedViewportChange = React.useCallback(
+    (viewport) => {
+      if (onViewportChange) {
+        onViewportChange(viewport);
+      }
+    },
+    [onViewportChange]
+  );
+
   useEffect(() => {
-    if (onViewportChange) {
-      onViewportChange({ isMobile, isTablet });
-    }
-  }, [isMobile, isTablet, onViewportChange]);
+    memoizedViewportChange({ isMobile, isTablet });
+  }, [isMobile, isTablet, memoizedViewportChange]);
 
   if (isMobile) {
     const activeStep = steps[currentStep];

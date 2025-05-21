@@ -258,6 +258,8 @@ def create_dynamodb_item(agent_state: AgentState, table_name: str) -> None:
             "owner": agent_state.get("owner", None),
             "retry": agent_state.get("retry", None),
             "timestamp": current_utc,
+            "iac_content": agent_state.get("iac_content", None),
+            "isGenAI": agent_state.get("isGenAI", None),
         }
 
         # Create a new item in DynamoDB

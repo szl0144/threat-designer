@@ -154,6 +154,7 @@ export const createThreatModelingPDF = async (
     addSection("Threat Catalog", threatCatalogData, [
       "name",
       "stride_category",
+      "owasp_category",
       "description",
       "target",
       "impact",

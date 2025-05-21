@@ -215,6 +215,10 @@ def invoke_lambda(owner, payload):
     description = payload.get("description", " ")
     assumptions = payload.get("assumptions", [])
     title = payload.get("title", " ")
+    iac_content = payload.get("iacContent", "")
+    isGenAI = payload.get("isGenAI", False)
+    #LOG.info(f"[IaC Content Validation] First 200 characters: {iac_content[:200] if iac_content else 'None'}")
+    
     try:
         lambda_client.invoke(
             FunctionName=FUNCTION,
@@ -226,10 +230,12 @@ def invoke_lambda(owner, payload):
                     "reasoning": reasoning,
                     "iteration": iteration,
                     "description": description,
+                    "isGenAI": isGenAI,
                     "assumptions": assumptions,
                     "owner": owner,
                     "title": title,
                     "replay": payload.get("replay", False),
+                    "iac_content": iac_content
                 }
             ),
         )

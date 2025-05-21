@@ -78,14 +78,16 @@ export const ThreatModel = ({ user }) => {
       setState({ results: false, processing: true });
       setVisible(false);
       await startThreatModeling(
-        null, // key
-        iteration, // iteration
-        reasoning,
-        null, // title
-        null, // description
-        null, // assumptions
-        true, // replay
-        id // id
+        null,           // key
+        iteration,      // iteration
+        reasoning,      // reasoning
+        null,           // title
+        null,           // description
+        true,           // isGenAI
+        null,           // assumptions
+        null,           // iacContent
+        true,           // replay
+        id             // id
       );
 
       setTrigger(Math.floor(Math.random() * 100) + 1);
@@ -468,6 +470,7 @@ export const ThreatModel = ({ user }) => {
                   assets={response?.item?.assets?.assets}
                   updateTM={updateThreatModeling}
                   refreshTrail={handleRefresh}
+                  isGenAI={response?.item?.isGenAI}
                 />
               )}
               {alert.visible && alert.state === "ErrorThreatModeling" && (

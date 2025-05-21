@@ -20,12 +20,13 @@ export default function ThreatModeling({ user }) {
   const [visible, setVisible] = useState(false);
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [iacFile, setIacFile] = useState(null);
 
   const handleBase64Change = (base64) => {
     setBase64Content(base64);
   };
 
-  const handleStartThreatModeling = async (title, description, assumptions) => {
+  const handleStartThreatModeling = async (title, description, assumptions, iacContent, isGenAI) => {
     setLoading(true);
     try {
       const results = await generateUrl(base64Content?.type);
@@ -36,7 +37,11 @@ export default function ThreatModeling({ user }) {
         reasoning,
         title,
         description,
-        assumptions
+        isGenAI,
+        assumptions,
+        iacContent,
+        false,      // replay
+        null,       // id
       );
       setLoading(false);
       setId(response.data.id);

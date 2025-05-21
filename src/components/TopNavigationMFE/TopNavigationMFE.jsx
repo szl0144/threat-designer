@@ -52,7 +52,7 @@ function TopNavigationMFE({ user, setAuthUser, colorMode, toggleColorMode }) {
                     marginRight: "60px", // Increased margin to create more separation
                   }}
                 >
-                  <a href="/" style={{ textDecoration: "none" }}>
+                  <div style={{ cursor: "pointer" }} onClick={() => navigate("/")}>
                     <img
                       src={Shield}
                       alt="Security Center"
@@ -60,10 +60,9 @@ function TopNavigationMFE({ user, setAuthUser, colorMode, toggleColorMode }) {
                         height: "40px",
                         marginTop: "5px",
                         width: "auto",
-                        cursor: "pointer",
                       }}
                     />
-                  </a>
+                  </div>
                   <div style={{ fontSize: "18px", marginTop: "2px", color: "white" }}>
                     Threat Designer
                   </div>
@@ -84,6 +83,14 @@ function TopNavigationMFE({ user, setAuthUser, colorMode, toggleColorMode }) {
                     }}
                   >
                     Threat Catalog
+                  </Button>
+                  <Button
+                    variant="link"
+                    onClick={() => {
+                      navigate("/chat");
+                    }}
+                  >
+                    Chat
                   </Button>
                 </div>
               </div>

@@ -35,10 +35,26 @@ data "archive_file" "td_lambda_code_zip" {
 }
 
 
-data "archive_file" "lambda_layer_langchain" {
+data "archive_file" "lambda_layer_langchain_core" {
   type        = "zip"
-  source_dir  = "build/langchain_code"
-  output_path = "build/langchain.zip"
+  source_dir  = "build/langchain_core_code"
+  output_path = "build/langchain_core.zip"
+
+  depends_on = [null_resource.build]
+}
+
+data "archive_file" "lambda_layer_langchain_aws" {
+  type        = "zip"
+  source_dir  = "build/langchain_aws_code"
+  output_path = "build/langchain_aws.zip"
+
+  depends_on = [null_resource.build]
+}
+
+data "archive_file" "lambda_layer_langgraph" {
+  type        = "zip"
+  source_dir  = "build/langgraph_code"
+  output_path = "build/langgraph.zip"
 
   depends_on = [null_resource.build]
 }

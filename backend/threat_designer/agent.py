@@ -82,17 +82,20 @@ def list_to_string(str_list):
     return "\n".join(str_list)
 
 
-def prepare_message_content(image_data, description, assumptions):
+def prepare_message_content(image_data, description, assumptions, iac_content):
     """Helper function to prepare message content.
 
     Args:
         image_data: Base64 encoded image data
         description: Description text
         assumptions: Assumptions text
+        iac_content: IaC template content
 
     Returns:
         List of content items for message
     """
+    #logger.info(f"[AI Input Validation] IaC content preview: {iac_content[:200]}")
+    
     return [
         {"type": "text", "text": "Analyze the following architecture:"},
         {
@@ -101,6 +104,10 @@ def prepare_message_content(image_data, description, assumptions):
         },
         {"type": "text", "text": f"<description>{description}</description>"},
         {"type": "text", "text": f"<assumptions>{assumptions}</assumptions>"},
+        {
+            "type": "text",
+            "text": f"<iac_template type=''>{iac_content}</iac_template>"
+        },
     ]
 
 
@@ -129,8 +136,12 @@ def define_assets(state: AgentState, config: RunnableConfig):
 
     # Construct message with image and text components
     content = prepare_message_content(
-        state["image_data"], state.get("description", ""), assumptions
+        state["image_data"],
+        state.get("description", ""),
+        assumptions,
+        state.get("iac_content")
     )
+    #logger.info(f"Iac content in AI: {state.get('iac_content')}")
     human_message = HumanMessage(content=content)
     struct_message = [asset_prompt(), human_message]
 
@@ -194,6 +205,10 @@ def define_flows(state: AgentState, config: RunnableConfig):
             "text": f"<description>{state.get('description', '')}</description>",
         },
         {"type": "text", "text": f"<assumptions>{assumptions}</assumptions>"},
+        {
+            "type": "text",
+            "text": f"<iac_template type=''>{state.get('iac_content')}</iac_template>"
+        },
     ]
     human_message = HumanMessage(content=content)
     struct_message = [flow_prompt(state["assets"]), human_message]
@@ -353,10 +368,15 @@ def create_threat_message(state, assumptions):
         },
         {
             "type": "text",
+            "text": f"<iac_template>{state.get('iac_content')}</iac_template>"
+        },
+        {
+            "type": "text",
             "text": f"<solution_description>{state.get('description', '')}</solution_description>",
         },
         {"type": "text", "text": f"<assumptions>{assumptions}</assumptions>"},
     ]
+
     return HumanMessage(content=content)
 
 
@@ -378,7 +398,9 @@ def define_threats(state: AgentState, config: RunnableConfig):
     assumptions = list_to_string(state.get("assumptions", []))
     tools = [ThreatsList]
     gap = state.get("gap", [])
-
+    isGenAI = state.get("isGenAI", False)
+    logger.info(f"[Threat Analysis] isGenAI value: {isGenAI}")
+    
     start_time = config["configurable"].get("start_time")
     current_time = datetime.now()
 
@@ -394,16 +416,17 @@ def define_threats(state: AgentState, config: RunnableConfig):
     if state.get("retry", 1) > 1:
         update_job_state(state["job_id"], "THREAT_RETRY", retry_count)
         system_prompt = threats_improve_prompt(
-            gap, state.get("threat_list"), state["assets"], state["system_architecture"]
-        )
+            gap, state.get("threat_list"), state["assets"], state["system_architecture"], isGenAI)
     else:
         update_job_state(state["job_id"], "THREAT", retry_count)
-        system_prompt = threats_prompt(state["assets"], state["system_architecture"])
-
+        system_prompt = threats_prompt(state["assets"], state["system_architecture"], isGenAI)
+    logger.info(f"[Threat Analysis] System prompt: {system_prompt}")
     struct_message = [system_prompt, human_message]
 
     try:
         response = model_with_tools.invoke(struct_message)
+        # 检查大模型的原始输出
+        logger.info(f"[Threat Analysis] Model raw response: {response.tool_calls[0]['args']}")
     except Exception as e:
         stack_trace = traceback.format_exc()
         logger.error("Error in defining threats: %s\n%s", e, stack_trace)
@@ -422,6 +445,7 @@ def define_threats(state: AgentState, config: RunnableConfig):
         thinking=config["configurable"].get("reasoning", True),
     )
     def process_threats(response):
+        logger.info(f"[Threat Analysis] Model args: {response.tool_calls[0]['args']}")
         return ThreatsList(**response.tool_calls[0]["args"])
 
     try:

@@ -4,7 +4,7 @@ import { SpaceBetween } from "@cloudscape-design/components";
 import Popover from "@cloudscape-design/components/popover";
 import Button from "@cloudscape-design/components/button";
 import Header from "@cloudscape-design/components/header";
-import { CategoryIcon, ImpactIcon, TargetIcon } from "./CustomButton.jsx";
+import { CategoryIcon, ImpactIcon, TargetIcon, OWASPIcon } from "./CustomButton.jsx";
 import Badge from "@cloudscape-design/components/badge";
 import Grid from "@cloudscape-design/components/grid";
 import TokenGroup from "@cloudscape-design/components/token-group";
@@ -72,6 +72,22 @@ export const ThreatComponent = (props) => {
                     iconSvg={CategoryIcon()}
                   ></Button>
                 </Popover>
+                {props?.isGenAI && props?.data?.owasp_category && (
+                  <Popover
+                    dismissButton={false}
+                    position="top"
+                    size="small"
+                    triggerType="custom"
+                    content={props?.data?.owasp_category}
+                  >
+                    <Button
+                      variant="icon"
+                      ariaLabel="OWASP category"
+                      fullWidth
+                      iconSvg={OWASPIcon()}
+                    ></Button>
+                  </Popover>
+                )}
                 <Popover
                   dismissButton={false}
                   position="top"
@@ -133,6 +149,11 @@ export const ThreatComponent = (props) => {
                   <div>
                     <strong>Category:</strong> {props?.data?.stride_category}
                   </div>
+                  {props?.isGenAI && props?.data?.owasp_category && (
+                    <div>
+                      <strong>OWASP Category:</strong> {props?.data?.owasp_category}
+                    </div>
+                  )}
                   <div>
                     <strong>Impact:</strong> {props?.data?.impact}
                   </div>

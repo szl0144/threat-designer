@@ -45,11 +45,11 @@ resource "aws_lambda_alias" "authorizer_lambda_alias" {
   function_version = aws_lambda_function.authorizer_lambda.version
 }
 
-resource "aws_lambda_provisioned_concurrency_config" "authorizer_lambda_alias_provisioned_concurrency_config" {
-  function_name                     = aws_lambda_alias.authorizer_lambda_alias.function_name
-  provisioned_concurrent_executions = var.provisioned_lambda_concurrency
-  qualifier                         = aws_lambda_alias.authorizer_lambda_alias.name
-}
+# resource "aws_lambda_provisioned_concurrency_config" "authorizer_lambda_alias_provisioned_concurrency_config" {
+#   function_name                     = aws_lambda_alias.authorizer_lambda_alias.function_name
+#   provisioned_concurrent_executions = var.provisioned_lambda_concurrency
+#   qualifier                         = aws_lambda_alias.authorizer_lambda_alias.name
+# }
 
 
 resource "aws_iam_role" "auth-lambda-execution-role" {

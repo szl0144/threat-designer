@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import TopNavigationMFE from "./components/TopNavigationMFE/TopNavigationMFE";
 import AppLayoutMFE from "./components/AppLayoutMFE/AppLayoutMFE";
 import LoginPageInternal from "./pages/Landingpage/Landingpage";
@@ -6,10 +6,12 @@ import { Spinner } from "@cloudscape-design/components";
 import { getUser } from "./services/Auth/auth";
 import { SpaceBetween } from "@cloudscape-design/components";
 import { SplitPanelProvider } from "./SplitPanelContext";
-import customTheme from "./customTheme"
+import customTheme from "./customTheme";
 import '@cloudscape-design/global-styles/index.css';
 import { applyMode, Mode } from '@cloudscape-design/global-styles';
 import { applyTheme } from '@cloudscape-design/components/theming';
+import Chat from "./pages/Chat/Chat";
+import { Routes, Route } from "react-router-dom";
 
 const App = () => {
   const [loading, setLoading] = useState(true);
@@ -25,7 +27,6 @@ const App = () => {
   }, []);
 
   useEffect(() => {
-
     applyMode(colorMode === 'light' ? Mode.Light : Mode.Dark);
     localStorage.setItem('colorMode', colorMode);
   }, [colorMode]);
@@ -68,12 +69,17 @@ const App = () => {
             setAuthUser={checkAuthState}
             colorMode={colorMode}
             toggleColorMode={toggleColorMode}
-             />
-          <AppLayoutMFE 
-            user={authUser}
-            colorMode={colorMode}
-            toggleColorMode={toggleColorMode}
-             />
+          />
+          <Routes>
+            <Route path="/chat" element={<Chat />} />
+            <Route path="/*" element={
+              <AppLayoutMFE 
+                user={authUser}
+                colorMode={colorMode}
+                toggleColorMode={toggleColorMode}
+              />
+            } />
+          </Routes>
         </SplitPanelProvider>
       ) : (
         <LoginPageInternal setAuthUser={checkAuthState} />

@@ -103,6 +103,15 @@ class Threat(BaseModel):
             "Elevation of Privilege"
         ),
     ]
+    owasp_category: Annotated[
+        str,
+        Field(
+            description="The OWASP category for LLM threats (only used when isGenAI is true): One of the following: "
+            "LLM01 Prompt Injection, LLM02: Sensitive Information Disclosure, LLM03: Supply Chain,"
+            "LLM04: Data and Model Poisoning, LLM05: Improper Output Handling, LLM06: Excessive Agency, "
+            "LLM07: System Prompt Leakage, LLM08: Vector and Embedding Weaknesses, LLM09: Misinformation, LLM10: Unbounded Consumption"
+        ),
+    ]
     description: Annotated[
         str,
         Field(
@@ -154,3 +163,5 @@ class AgentState(TypedDict):
     stop: Optional[bool] = False
     gap: Annotated[List[str], operator.add] = []
     replay: Optional[bool] = False
+    iac_content: Optional[str] = None
+    isGenAI: Optional[bool] = False

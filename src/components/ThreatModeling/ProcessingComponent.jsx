@@ -17,9 +17,10 @@ export default function Processing({ status, iteration, id }) {
   const [textVisible, setTextVisible] = useState(false);
   const [currentOption, setCurrentOption] = useState(null);
   const [currentStep, setCurrentStep] = useState(0);
-  const handleViewportChange = ({ isMobile, isTablet }) => {
+
+  const handleViewportChange = React.useCallback(({ isMobile, isTablet }) => {
     setViewport({ isMobile, isTablet });
-  };
+  }, []);
 
   const options = useMemo(
     () => ({

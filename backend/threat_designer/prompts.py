@@ -17,8 +17,9 @@ def asset_prompt() -> str:
     <task>
     Identify Key Assets and Entities:
 Start by identifying the most critical assets and entities within the system that require protection. Assets could include sensitive data, databases, communication channels, or APIs, while entities represent users, services, or systems interacting with the system.
-If provided by the user pay attention to the description of the solution provided within <description> and the assumptions provided under <assumptions>. \n
+If provided by the user pay attention to the description of the solution provided within <description>, the assumptions provided under <assumptions>, and the IaC template provided in <iac_template>. \n
 Assumptions Establish the baseline security context and boundaries that help identify what's in scope for analysis and what potential threats are relevant to consider. \n
+If an IaC template is provided, analyze it to identify additional assets, entities and resources configurations that might not be visible in the architecture diagram. \n
 "What are the critical assets or components within the system that need protection? Who are the key entities involved? List each asset and entity in detail." \n
     </task> \n
     <output_format>
@@ -87,7 +88,26 @@ def gap_prompt(gap, assets, system_architecture) -> str:
     """
 
 
-def threats_improve_prompt(gap, threat_list, assets, flows) -> str:
+def threats_improve_prompt(gap, threat_list, assets, flows, isGenAI) -> str:
+    owasp_methodology = """
+    Additionally, since this is a GenAI application, also classify threats based on OWASP Top 10 for Large Language Model Applications:
+        1. LLM01 Prompt Injection: How could attackers manipulate prompts to bypass security controls or extract sensitive information?
+        2. LLM02 Sensitive Information Disclosure: How might the LLM inadvertently reveal sensitive or private information?
+        3. LLM03 Supply Chain: What risks exist in the model and dependency supply chain?
+        4. LLM04 Data and Model Poisoning: What are the risks of model training data being compromised or manipulated?
+        5. LLM05 Improper Output Handling: How might the system fail to properly validate or sanitize LLM outputs?
+        6. LLM06 Excessive Agency: What risks exist from the LLM acting beyond its intended scope or authority?
+        7. LLM07 System Prompt Leakage: How might system prompts or configurations be exposed?
+        8. LLM08 Vector and Embedding Weaknesses: What vulnerabilities exist in vector storage or embedding processes?
+        9. LLM09 Misinformation: How might the system generate or propagate false information?
+        10. LLM10 Unbounded Consumption: How could resource consumption be exploited?
+    """ if isGenAI else ""
+    owasp_field = '''
+        OWASP Category: [Select one from: LLM01 Prompt Injection, LLM02: Sensitive Information Disclosure, LLM03: Supply Chain, 
+        LLM04: Data and Model Poisoning, LLM05: Improper Output Handling, LLM06: Excessive Agency, 
+        LLM07: System Prompt Leakage, LLM08: Vector and Embedding Weaknesses, LLM09: Misinformation, 
+        LLM10: Unbounded Consumption]
+    ''' if isGenAI else ""
     return f"""You are an expert in Security, AWS and Threat Modeling. You are part of a team of assistant whose overall goal is to perform threat modeling
         on a given architecture. Specifically your role is to enrich the threat catalog by including new threats that may have been missed by your colleague. \n
         If a gap analysis is provided in <gap> leverage that information to improve the threat catalog \n
@@ -123,7 +143,7 @@ def threats_improve_prompt(gap, threat_list, assets, flows) -> str:
         D (Denial of Service): How could an attacker disrupt services, making them unavailable to legitimate users?
         E (Elevation of Privilege): How might attackers gain unauthorized access to higher privilege levels or roles?
         "For each STRIDE category, identify how potential attackers could exploit vulnerabilities in each asset or entity." \n
-
+        {owasp_methodology}
     Think hard to provide a comprehensive and exhaustive list of threats. Look very carefully to not miss anything out \n
     </methodology>
 
@@ -138,6 +158,7 @@ def threats_improve_prompt(gap, threat_list, assets, flows) -> str:
         <output_format>
         Threat Name: [Threat Name]
         STRIDE Category: [Select one: Spoofing, Tampering, Repudiation, Information Disclosure, Denial of Service, Elevation of Privilege]
+        {owasp_field}
         Description: [description of the threat]
         Target: [What asset or component is being targeted]
         Impact: [Potential consequences if the threat is realized]
@@ -150,11 +171,32 @@ def threats_improve_prompt(gap, threat_list, assets, flows) -> str:
         """
 
 
-def threats_prompt(assets, flows) -> str:
+def threats_prompt(assets, flows, isGenAI) -> str:
+    owasp_methodology = """
+    Additionally, since this is a GenAI application, also classify threats threats based on OWASP Top 10 for Large Language Model Applications:
+        1. LLM01 Prompt Injection: How could attackers manipulate prompts to bypass security controls or extract sensitive information?
+        2. LLM02 Sensitive Information Disclosure: How might the LLM inadvertently reveal sensitive or private information?
+        3. LLM03 Supply Chain: What risks exist in the model and dependency supply chain?
+        4. LLM04 Data and Model Poisoning: What are the risks of model training data being compromised or manipulated?
+        5. LLM05 Improper Output Handling: How might the system fail to properly validate or sanitize LLM outputs?
+        6. LLM06 Excessive Agency: What risks exist from the LLM acting beyond its intended scope or authority?
+        7. LLM07 System Prompt Leakage: How might system prompts or configurations be exposed?
+        8. LLM08 Vector and Embedding Weaknesses: What vulnerabilities exist in vector storage or embedding processes?
+        9. LLM09 Misinformation: How might the system generate or propagate false information?
+        10. LLM10 Unbounded Consumption: How could resource consumption be exploited?
+    """ if isGenAI else ""
+    owasp_field = '''
+        OWASP Category: [Select one from: LLM01 Prompt Injection, LLM02: Sensitive Information Disclosure, LLM03: Supply Chain, 
+        LLM04: Data and Model Poisoning, LLM05: Improper Output Handling, LLM06: Excessive Agency, 
+        LLM07: System Prompt Leakage, LLM08: Vector and Embedding Weaknesses, LLM09: Misinformation, 
+        LLM10: Unbounded Consumption]
+    ''' if isGenAI else ""
+    
     return f"""You are an expert in Security, AWS and Threat Modeling. You are part of a team of assistant whose overall goal is to perform threat modelling
         on a given architecture. Specifically your role is to generate the threats by analyzing the architecture in details and leveraging the information provided by your peers in:
     <identified_assets_and_entities> and <data_flow>. \n
-    If provided by the user pay attention to the description of the solution provided within <solution_description> and the assumptions provided under <assumptions>. \n
+    If provided by the user pay attention to the description of the solution provided within <solution_description>, the assumptions provided under <assumptions>, and the IaC template provided in <iac_template>. \n
+    If an IaC template is provided, analyze it for potential security misconfigurations and vulnerabilities. \n
     Assumptions Establish the baseline security context and boundaries that help identify what's in scope for analysis and what potential threats are relevant to consider. \n
     Make sure that the threat description is exhaustive.
         A good description should be from 35-50 words and follow the <threat_grammar> structure. here are some good description examples within <description_example>.
@@ -184,8 +226,7 @@ def threats_prompt(assets, flows) -> str:
         D (Denial of Service): How could an attacker disrupt services, making them unavailable to legitimate users?
         E (Elevation of Privilege): How might attackers gain unauthorized access to higher privilege levels or roles?
         "For each STRIDE category, identify how potential attackers could exploit vulnerabilities in each asset or entity." \n
-
-
+        {owasp_methodology}
     Think hard to provide a comprehensive and exhaustive list of threats. Look very carefully to not miss anything out \n
     </task>
 
@@ -194,12 +235,12 @@ def threats_prompt(assets, flows) -> str:
         </identified_assets_and_entities>
         <data_flow>
         {flows}
-        </data_flow>
-
+        </data_flow>  
 
         <output_format>
         Threat Name: [Threat Name]
         STRIDE Category: [Select one: Spoofing, Tampering, Repudiation, Information Disclosure, Denial of Service, Elevation of Privilege]
+        {owasp_field}
         Description: [description of the threat]
         Target: [What asset or component is being targeted]
         Impact: [Potential consequences if the threat is realized]
