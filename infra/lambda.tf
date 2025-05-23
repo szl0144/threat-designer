@@ -86,7 +86,7 @@ resource "aws_lambda_function" "backend" {
       LOG_LEVEL              = "INFO",
       REGION                 = var.region,
       PORTAL_REDIRECT_URL    = "https://www.reinforce-com326.com"
-      TRUSTED_ORIGINS        = "https://${aws_amplify_branch.develop.branch_name}.${aws_amplify_app.threat-designer.default_domain}, http://localhost:5173, https://www.reinforce-com326.com"
+      TRUSTED_ORIGINS        = "https://${aws_amplify_branch.develop.branch_name}.${aws_amplify_app.threat-designer.default_domain},http://localhost:5173,https://www.reinforce-com326.com"
       THREAT_MODELING_LAMBDA = aws_lambda_function.threat_designer.id,
       AGENT_STATE_TABLE      = aws_dynamodb_table.threat_designer_state.id,
       AGENT_TRAIL_TABLE      = aws_dynamodb_table.threat_designer_trail.id,
@@ -143,4 +143,75 @@ resource "aws_lambda_alias" "backend" {
   description      = "provisioned concurrency"
   function_name    = aws_lambda_function.backend.arn
   function_version = aws_lambda_function.backend.version
+}
+
+#======================== Chat Lambda ======================
+
+resource "aws_lambda_function" "chat" {
+  description                    = "Lambda function for threat designer chat API"
+  filename                       = data.archive_file.chat_lambda_code_zip.output_path
+  source_code_hash               = data.archive_file.chat_lambda_code_zip.output_base64sha256
+  function_name                  = "${local.prefix}-lambda-chat"
+  handler                        = "chat_handler.lambda_handler"
+  memory_size                    = 1024
+  publish                        = true
+  role                           = aws_iam_role.threat_designer_chat_role.arn
+  reserved_concurrent_executions = var.lambda_concurrency
+  runtime                        = local.python_version
+  environment {
+    variables = {
+      LOG_LEVEL              = "INFO",
+      REGION                 = var.region,
+      AGENT_STATE_TABLE      = aws_dynamodb_table.threat_designer_state.id,
+      MAIN_MODEL             = jsonencode(var.model_main)
+      MODEL_STRUCT           = jsonencode(var.model_struct)
+      REASONING_MODELS       = jsonencode(var.reasoning_models)
+    }
+  }
+  timeout = 300
+  tracing_config {
+    mode = "Active"
+  }
+  layers = [local.powertools_layer_arn]
+}
+
+resource "aws_iam_role" "threat_designer_chat_role" {
+  name = "${local.prefix}-chat-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "lambda.amazonaws.com"
+        }
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy" "lambda_threat_designer_chat_policy" {
+  name = "${local.prefix}-chat-policy"
+  role = aws_iam_role.threat_designer_chat_role.id
+  policy = templatefile("${path.module}/templates/chat_lambda_execution_role_policy.json", {
+    state_table_arn = aws_dynamodb_table.threat_designer_state.arn
+  })
+}
+
+resource "aws_lambda_alias" "chat" {
+  name             = "dev"
+  description      = "chat lambda alias"
+  function_name    = aws_lambda_function.chat.arn
+  function_version = aws_lambda_function.chat.version
+}
+
+resource "aws_lambda_permission" "chat_api_gw" {
+  statement_id  = "AllowExecutionFromAPIGatewayChat"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.chat.function_name
+  principal     = "apigateway.amazonaws.com"
+  qualifier     = aws_lambda_alias.chat.name
+  source_arn = "${aws_api_gateway_rest_api.threat_design_api.execution_arn}/*/*"
 }

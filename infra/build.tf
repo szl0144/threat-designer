@@ -76,3 +76,11 @@ data "archive_file" "lambda_layer_authorization" {
 
 #   depends_on = [null_resource.build]
 # }
+
+data "archive_file" "chat_lambda_code_zip" {
+  type        = "zip"
+  source_dir  = "build/chat_code"
+  output_path = "build/chat.zip"
+
+  depends_on = [null_resource.build]
+}

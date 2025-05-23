@@ -1,0 +1,176 @@
+/* Chat Message Markdown Styles */
+.chat-message-markdown {
+  line-height: 1.6;
+  padding: 2px 0px 0px 0px;
+}
+
+.chat-message-markdown h1,
+.chat-message-markdown h2,
+.chat-message-markdown h3,
+.chat-message-markdown h4,
+.chat-message-markdown h5,
+.chat-message-markdown h6 {
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.chat-message-markdown h1:first-child,
+.chat-message-markdown h2:first-child,
+.chat-message-markdown h3:first-child,
+.chat-message-markdown h4:first-child {
+  margin-top: 0;
+}
+
+.chat-message-markdown h1 {
+  font-size: 1.5rem;
+}
+
+.chat-message-markdown h2 {
+  font-size: 1.3rem;
+}
+
+.chat-message-markdown h3 {
+  font-size: 1.15rem;
+}
+
+.chat-message-markdown h4 {
+  font-size: 1.05rem;
+}
+
+.chat-message-markdown p {
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+.chat-message-markdown p:first-child {
+  margin-top: 0;
+}
+
+.chat-message-markdown p:last-child {
+  margin-bottom: 0;
+}
+
+.chat-message-markdown ul,
+.chat-message-markdown ol {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  padding-left: 2rem;
+}
+
+.chat-message-markdown ul:first-child,
+.chat-message-markdown ol:first-child {
+  margin-top: 0;
+}
+
+.chat-message-markdown ul:last-child,
+.chat-message-markdown ol:last-child {
+  margin-bottom: 0;
+}
+
+.chat-message-markdown li {
+  margin-bottom: 0.25rem;
+}
+
+.chat-message-markdown li > p {
+  margin-bottom: 0.5rem;
+}
+
+.chat-message-markdown strong {
+  font-weight: 600;
+}
+
+.chat-message-markdown em {
+  font-style: italic;
+}
+
+.chat-message-markdown code {
+  background-color: rgba(175, 184, 193, 0.2);
+  padding: 0.2rem 0.4rem;
+  border-radius: 3px;
+  font-size: 0.9em;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+}
+
+.chat-message-markdown pre {
+  background-color: rgba(175, 184, 193, 0.2);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 1rem 0;
+}
+
+.chat-message-markdown pre code {
+  background-color: transparent;
+  padding: 0;
+  border-radius: 0;
+  font-size: 0.875rem;
+}
+
+.chat-message-markdown blockquote {
+  border-left: 4px solid #d0d7de;
+  padding: 0 1rem;
+  margin: 1rem 0;
+  color: #656d76;
+}
+
+.chat-message-markdown table {
+  border-collapse: collapse;
+  border-spacing: 0;
+  width: 100%;
+  margin: 1rem 0;
+  overflow: auto;
+}
+
+.chat-message-markdown table th,
+.chat-message-markdown table td {
+  border: 1px solid #d0d7de;
+  padding: 6px 13px;
+}
+
+.chat-message-markdown table th {
+  background-color: #f6f8fa;
+  font-weight: 600;
+}
+
+.chat-message-markdown table tr:nth-child(2n) {
+  background-color: #f6f8fa;
+}
+
+.chat-message-markdown hr {
+  border: none;
+  border-top: 1px solid #d0d7de;
+  margin: 1.5rem 0;
+}
+
+/* Adjustments for inverted (user) messages */
+.chat-message-markdown.inverted code {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.chat-message-markdown.inverted pre {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.chat-message-markdown.inverted blockquote {
+  border-left-color: rgba(255, 255, 255, 0.3);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.chat-message-markdown.inverted table th,
+.chat-message-markdown.inverted table td {
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.chat-message-markdown.inverted table th {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.chat-message-markdown.inverted table tr:nth-child(2n) {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.chat-message-markdown.inverted hr {
+  border-top-color: rgba(255, 255, 255, 0.3);
+} 

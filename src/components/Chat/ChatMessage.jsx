@@ -1,8 +1,19 @@
 import React from 'react';
 import { Box, Button, Icon } from "@cloudscape-design/components";
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import './ChatMessage.css';
 
 export default function ChatMessage({ message }) {
   const isAssistant = message.role === 'assistant';
+
+  // Function to check if message is a prompt template
+  const isPromptTemplate = (content) => {
+    if (isAssistant) return false;
+    return content.includes('You are a cloud security professional') ||
+           content.includes('You are a cloud security engineer') ||
+           content.includes('You are a cloud security architect');
+  };
 
   const handleCopy = () => {
     if (navigator.clipboard && message.content) {
@@ -17,6 +28,16 @@ export default function ChatMessage({ message }) {
     }
   };
   
+  // Function to preserve line breaks in user messages
+  const formatUserMessage = (content) => {
+    return content.split('\n').map((line, index) => (
+      <React.Fragment key={index}>
+        {line}
+        {index < content.split('\n').length - 1 && <br />}
+      </React.Fragment>
+    ));
+  };
+  
   return (
     <Box
         padding={{ vertical: 'xxxs', horizontal: isAssistant ? 'xxxxs' : 'xxxxs' }}
@@ -25,7 +46,7 @@ export default function ChatMessage({ message }) {
         display: 'flex',
         flexDirection: 'column',
         alignItems: isAssistant ? 'flex-start' : 'flex-end',
-        width: '100%'
+        width: '99%'
       }}>
         <div style={{
           fontWeight: 'bold',
@@ -40,23 +61,46 @@ export default function ChatMessage({ message }) {
           alignItems: 'center',
           backgroundColor: isAssistant ? '#f2f3f3' : '#0972d3',
           color: isAssistant ? '#16191f' : '#ffffff',
-          padding: '2px 14px',
+          padding: isAssistant 
+            ? '5px 5px 5px 15px' 
+            : isPromptTemplate(message.content) 
+              ? '8px 5px 8px 15px' 
+              : '3px 5px 3px 15px',
           borderRadius: '8px',
-          maxWidth: '85%',
+          width: isAssistant ? '100%' : 'auto',
+          maxWidth: '100%',
           wordBreak: 'break-word',
           boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
-          position: 'relative'
+          position: 'relative',
+          minHeight: '30px'
         }}>
           <div style={{ flexGrow: 1, marginRight: '8px' }}>
-            {message.content}
+            {isAssistant ? (
+              <div className={`chat-message-markdown ${!isAssistant ? 'inverted' : ''}`}>
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {message.content}
+                </ReactMarkdown>
+              </div>
+            ) : (
+              <div style={{ whiteSpace: 'pre-wrap' }}>
+                {formatUserMessage(message.content)}
+              </div>
+            )}
           </div>
-          <Button 
-            variant="icon" 
-            iconName="copy" 
-            onClick={handleCopy} 
-            ariaLabel="Copy message content"
-            style={isAssistant ? {} : { color: '#ffffff' }}
-          />
+          <div 
+            onClick={handleCopy}
+            style={{ 
+              cursor: 'pointer', 
+              padding: '4px',
+              alignSelf: 'flex-start'
+            }}
+          >
+            <Icon 
+              name="copy" 
+              size="normal"
+              variant={isAssistant ? "normal" : "inverted"}
+            />
+          </div>
         </div>
       </div>
     </Box>

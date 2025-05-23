@@ -3,6 +3,7 @@ resource "aws_api_gateway_rest_api" "threat_design_api" {
   description = "Threat design api"
   body = templatefile("${local.lambda_src_path}/openapi.yml", {
     lambda_arn     = local.api_lambda_invoke_url,
+    chat_lambda_arn = "arn:aws:apigateway:${var.region}:lambda:path/2015-03-31/functions/${aws_lambda_function.chat.arn}:${aws_lambda_alias.chat.name}/invocations",
     authorizer_arn = local.authorizer_invoke_url,
     aws_region     = var.region,
     ui_domain      = "http://localhost:5173"

@@ -63,6 +63,109 @@ x-amazon-apigateway-gateway-responses:
           "code":  "BadRequestBody"
         }
 paths:
+  "/chat":
+    post:
+      summary: Submit chat message
+      description: Submit chat message with threat model ID and model ID
+      tags:
+        - Chat
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                prompt:
+                  type: string
+                  description: User's chat message
+                threat_model_id:
+                  type: string
+                  description: ID of the threat model
+                model_id:
+                  type: string
+                  description: ID of the model to use
+              required:
+                - prompt
+                - threat_model_id
+                - model_id
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  response:
+                    type: string
+                    description: AI response
+                  status:
+                    type: string
+                    description: Response status
+          headers:
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+        "400":
+          $ref: "#/components/responses/400"
+        "500":
+          $ref: "#/components/responses/500"
+      x-amazon-apigateway-integration:
+        payloadFormatVersion: "2.0"
+        type: "aws_proxy"
+        httpMethod: "POST"
+        uri: "${chat_lambda_arn}"
+        connectionType: "INTERNET"
+        contentHandling: CONVERT_TO_TEXT
+        passthroughBehavior: NEVER
+        timeoutInMillis: 29000
+    options:
+      responses:
+        "200":
+          description: OK
+          headers:
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+            Access-Control-Allow-Credentials:
+              schema:
+                type: string
+      security: []
+      tags:
+        - CORS (Options)
+      x-amazon-apigateway-integration:
+        type: mock
+        requestTemplates:
+          application/json: |
+            {
+              "statusCode": 200,
+              #set($origin = $input.params().header.get("Origin"))
+              #if($origin == "http://localhost:3000" || $origin == "http://localhost:5173" || $origin == "${ui_domain}")
+                "origin": "$origin"
+              #else
+                "origin": "${ui_domain}"
+              #end
+            }
+        responses:
+          default:
+            statusCode: "200"
+            responseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'${ui_domain}'"
+              method.response.header.Access-Control-Allow-Methods: "'GET,POST,PUT,DELETE,OPTIONS'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Requested-With'"
+              method.response.header.Access-Control-Allow-Credentials: "'true'"
+            responseTemplates:
+              application/json: "{}"
   "/threat-designer/status/{id}":
     get:
       summary: Fetch Threat modeling statuses

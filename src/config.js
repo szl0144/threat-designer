@@ -22,4 +22,10 @@ const amplifyConfig = {
     },
   },
 };
+
+// Function to get API URL
+export const getApiUrl = () => {
+  return config.controlPlaneAPI;
+};
+
 export { config, amplifyConfig };

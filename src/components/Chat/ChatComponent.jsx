@@ -12,17 +12,71 @@ import {
   Link
 } from "@cloudscape-design/components";
 import ChatMessage from './ChatMessage';
+import { sendChatMessage } from '../../services/chatService';
 
 const MODEL_OPTIONS = [
-  { label: "Amazon Nova Lite", value: "nova-lite", },
-  { label: "Amazon Nova Micro", value: "nova-micro" },
-  { label: "Amazon Nova Premier", value: "nova-premier" },
-  { label: "Amazon Nova Pro", value: "nova-pro" },
-  { label: "Claude 3.7 Sonnet", value: "claude-3-sonnet" },
-  { label: "Claude 3.5 Sonnet v2", value: "claude-3.5-sonnet" },
-  { label: "Claude 3.5 Haiku", value: "claude-3.5-haiku" },
-  { label: "DeepSeek-R1", value: "deepseek-r1" }
+  { label: "Amazon Nova Lite", value: "us.amazon.nova-lite-v1:0", },
+  { label: "Amazon Nova Micro", value: "us.amazon.nova-micro-v1:0" },
+  { label: "Amazon Nova Premier", value: "us.amazon.nova-premier-v1:0" },
+  { label: "Amazon Nova Pro", value: "us.amazon.nova-pro-v1:0" },
+  { label: "Claude 4.0 Opus", value: "us.anthropic.claude-opus-4-20250514-v1:0" },
+  { label: "Claude 4.0 Sonnet", value: "us.amazon.nova-pro-v1:0" },
+  { label: "Claude 3.7 Sonnet", value: "us.anthropic.claude-sonnet-4-20250514-v1:0" },
+  { label: "Claude 3.5 Sonnet v2", value: "us.anthropic.claude-3-5-sonnet-20241022-v2:0" },
+  { label: "Claude 3.5 Haiku", value: "us.anthropic.claude-3-5-haiku-20241022-v1:0" },
+  { label: "DeepSeek-R1", value: "us.deepseek.r1-v1:0" }
 ];
+
+const RED_TEAM_PROMPT = `You are a cloud security professional specialized in adversary emulation and threat preparedness. I will provide you with a detailed threat modeling report for a cloud-based application.
+
+Based on this report, I would like you to:
+1. Propose a security validation plan that follows industry frameworks (e.g., MITRE ATT&CK, OWASP Top 10 for LLMs).
+2. For each major risk or attacker model, suggest one or more controlled simulation exercises.
+3. For each exercise, describe:
+   - Objective
+   - Emulated kill chain steps (e.g., access testing, lateral access, exfil simulation)
+   - Tools or techniques for ethical simulation in a lab environment
+   - Visibility and logging checkpoints
+   - Recommendations for detection and mitigation validation
+4. Where applicable, provide example test scripts (in Bash, Python, or Terraform) to demonstrate scenarios in a sandbox environment.
+5. Ensure all actions are for educational or internal validation purposes only, and follow ethical red team/blue team engagement practices.`;
+
+const IAC_TEMPLATE_PROMPT = `You are a cloud security engineer specializing in secure infrastructure-as-code (IaC) and threat mitigation.
+
+I will provide you with A threat modeling report that lists identified risks, vulnerabilities, and misconfigurations in a specific cloud environment.
+The report may includes an infrastructure-as-code (IaC) template file (in Terraform, AWS CloudFormation, or OpenAPI format) that represents the current, potentially insecure, cloud configuration.
+
+Your task is to:
+- Carefully review the threat modeling report and cross-reference it with the provided IaC template.
+- Identify the insecure configurations, missing security controls, or exploitable design issues described in the report.
+- If I provide you with an IaC template, Modify the IaC template to address and remediate all identified threats and vulnerabilities. 
+- Ensure the updated IaC file follows best practices in cloud security (e.g., least privilege, encryption, logging, input validation, etc.).
+- Do not explain your reasoning. Just return the fully remediated, secure IaC file as your output.
+- If no IaC template is provided, response with "No IaC template provided".
+
+⚠️ Notes:
+- Keep the file format the same as the original input (Terraform, CloudFormation, or OpenAPI).
+- Do not include any comments or explanations unless explicitly required in the syntax.
+- Assume the code will be deployed in a production-grade environment.`;
+
+const Remediate_Prompt = `You are a cloud security architect experienced in threat modeling and infrastructure remediation using AWS CloudFormation.
+
+I will provide you with a full threat modeling report that identifies potential security risks, misconfigurations, and vulnerabilities in a cloud-based system architecture.
+
+Your task is to:
+1. Carefully analyze the threats listed in the report.
+2. For each threat, suggest a concrete remediation strategy, step-by-step.
+3. Where applicable, generate AWS CloudFormation YAML code snippets to implement the mitigation or fix directly in the infrastructure.
+4. Use only native AWS services and security best practices (e.g., IAM least privilege, encryption at rest and in transit, secure logging, VPC isolation, etc.).
+5. Include references to the original threat IDs or categories, so the fixes are traceable back to the report.
+
+Formatting requirements:
+- Clearly label each threat ID or name from the report.
+- Provide either:
+   a) a step-by-step explanation of how to remediate it,   
+   b) a YAML CloudFormation code block that implements the fix. (if can)
+- Do not include any unrelated commentary or generic suggestions.
+- Assume the audience understands AWS but needs clear, actionable remediation advice.`
 
 const formatDate = (timestamp) => {
   const date = new Date(parseInt(timestamp));
@@ -132,27 +186,45 @@ export default function ChatComponent({ threatModels = [] }) {
     }
   }, [messages, selectedChat, isInitialized]);
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (inputMessage.trim() && selectedChat) {
+      // Get the current chat to find the threat model ID
+      const currentChat = chatHistory.find(chat => chat.id === selectedChat);
+      if (!currentChat || !currentChat.modelId) {
+        console.error('No threat model associated with current chat');
+        return;
+      }
+
       // Create an updated messages array with the new user message
       const updatedMessages = [...messages, { role: 'user', content: inputMessage }];
+      const userMessage = inputMessage;
       
-      setMessages([...messages, { role: 'user', content: inputMessage }]);
+      setMessages(updatedMessages);
       setInputMessage('');
       
-      setTimeout(() => {
-        // Create a response message
+      // Add a loading message
+      const loadingMessage = { role: 'assistant', content: 'Generating...' };
+      const messagesWithLoading = [...updatedMessages, loadingMessage];
+      setMessages(messagesWithLoading);
+      
+      try {
+        // Send the message to the backend
+        const response = await sendChatMessage(
+          userMessage,
+          currentChat.modelId, // threat model ID
+          selectedModel.value // selected AI model ID
+        );
+        
+        // Replace loading message with actual response
         const responseMessage = { 
           role: 'assistant', 
-          content: 'This is a placeholder response. Backend integration pending.' 
+          content: response.response || 'No response received from the AI model.'
         };
         
-        // Add the response to the messages state
         const messagesWithResponse = [...updatedMessages, responseMessage];
         setMessages(messagesWithResponse);
         
-        // Manually update the specific chat in history with the updated messages
-        // This provides an alternative update path besides the useEffect
+        // Update chat history
         setChatHistory(prev => {
           const updatedHistory = [...prev];
           const chatIndex = updatedHistory.findIndex(c => c.id === selectedChat);
@@ -163,10 +235,35 @@ export default function ChatComponent({ threatModels = [] }) {
               timestamp: Date.now()
             };
           }
-          // Don't sort - maintain current order
           return updatedHistory;
         });
-      }, 1000);
+        
+      } catch (error) {
+        console.error('Error sending message:', error);
+        
+        // Replace loading message with error message
+        const errorMessage = { 
+          role: 'assistant', 
+          content: `Sorry, there was an error processing your request: ${error.message}`
+        };
+        
+        const messagesWithError = [...updatedMessages, errorMessage];
+        setMessages(messagesWithError);
+        
+        // Update chat history with error
+        setChatHistory(prev => {
+          const updatedHistory = [...prev];
+          const chatIndex = updatedHistory.findIndex(c => c.id === selectedChat);
+          if (chatIndex !== -1) {
+            updatedHistory[chatIndex] = {
+              ...updatedHistory[chatIndex],
+              messages: messagesWithError,
+              timestamp: Date.now()
+            };
+          }
+          return updatedHistory;
+        });
+      }
     }
   };
 
@@ -297,7 +394,7 @@ export default function ChatComponent({ threatModels = [] }) {
                     <div
                       key={chat.id}
                       style={{
-                        padding: '5px 16px 7px 0px',
+                        padding: '0px 16px 5px 0px',
                         borderRadius: '12px',
                         backgroundColor: selectedChat === chat.id ? '#fafbfb' : '#ffffff',
                         display: 'flex',
@@ -356,7 +453,7 @@ export default function ChatComponent({ threatModels = [] }) {
                         width: '100%'
                       }}>
                         <div style={{ 
-                          fontSize: '20px',
+                          fontSize: '18px',
                           fontWeight: selectedChat === chat.id ? 'normal' : 'normal',
                           color: selectedChat === chat.id ? '#0972d3' : '#666871',
                           textAlign: 'left',
@@ -410,22 +507,76 @@ export default function ChatComponent({ threatModels = [] }) {
               Chat
             </Header>
             <div style={{ marginTop: '0px' }}></div>
-            <SpaceBetween size="xxl">
+            <SpaceBetween size="xs">
               <Container variant="borderless">
                 <div style={{ 
                   height: "60vh", 
                   overflowY: "auto", 
-                  padding: "15px",
-                  marginTop: "0px",
+                  padding: "0",
                   width: "100%",
-                  marginLeft: "-20px",
-                  marginRight: "-20px"
+                  margin: "0"
                 }}>
                   {messages.map((message, index) => (
                     <ChatMessage key={index} message={message} />
                   ))}
                 </div>
               </Container>
+              
+              <div style={{ display: 'flex', justifyContent: 'flex-start', gap: '16px', marginBottom: '5px', marginTop: '-15px' }}>
+                <div 
+                  onClick={() => setInputMessage(RED_TEAM_PROMPT)}
+                  style={{
+                    backgroundColor: '#ffffff',
+                    border: '1px solid #0972d3',
+                    borderRadius: '16px',
+                    padding: '8px 16px',
+                    color: '#0972d3',
+                    cursor: 'pointer',
+                    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
+                    transition: 'all 0.2s ease',
+                    fontSize: '14px',
+                    fontWeight: '500'
+                  }}
+                >
+                  Generate Red Teaming Solution
+                </div>
+                <div 
+                  onClick={() => setInputMessage( IAC_TEMPLATE_PROMPT)}
+                  style={{
+                    backgroundColor: '#ffffff',
+                    border: '1px solid #0972d3',
+                    borderRadius: '16px',
+                    padding: '8px 16px',
+                    color: '#0972d3',
+                    cursor: 'pointer',
+                    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
+                    transition: 'all 0.2s ease',
+                    fontSize: '14px',
+                    fontWeight: '500'
+                  }}
+                >
+                  Give me the remediated IaC template
+                </div>
+                <div 
+                  onClick={() => setInputMessage(Remediate_Prompt)}
+                  style={{
+                    backgroundColor: '#ffffff',
+                    border: '1px solid #0972d3',
+                    borderRadius: '16px',
+                    padding: '8px 16px',
+                    color: '#0972d3',
+                    cursor: 'pointer',
+                    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
+                    transition: 'all 0.2s ease',
+                    fontSize: '14px',
+                    fontWeight: '500'
+                  }}
+                >
+                  Generate the threat remediation plan
+                </div>
+              </div>
+              
+              
               <div style={{ display: 'flex', gap: '16px', width: '100%' }}>
                 <div style={{ flex: 1 }}>
                   <Textarea
